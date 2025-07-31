@@ -46,19 +46,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }
 
   const checkUser = async (ethProvider: BrowserProvider) => {
+    setLoading(true);
     try {
-      const accounts = await ethProvider.listAccounts();
-      if (accounts.length > 0) {
-        const address = accounts[0].address;
-        const contract = await getContract();
-        const isInstitution = await contract.isInstitution(address);
-        const isVerifier = await contract.isVerifier(address);
-        setCurrentUser({ address, isInstitution, isVerifier });
-      } else {
-        setCurrentUser(null);
-      }
+      const signer = await ethProvider.getSigner();
+      const address = signer.address;
+      const contract = await getContract();
+      const isInstitution = await contract.isInstitution(address);
+      const isVerifier = await contract.isVerifier(address);
+      setCurrentUser({ address, isInstitution, isVerifier });
     } catch (error) {
-      console.error("Error checking user:", error);
+      // This error is expected if no wallet is connected, so we can silence it.
       setCurrentUser(null);
     } finally {
       setLoading(false);
