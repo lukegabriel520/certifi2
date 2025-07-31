@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, Building2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import CertiFiLogo from '@/assets/CertiFi_Logo.jpg';
+import CertiFiLogo from '@/assets/CertiFi_Logo.png';
 
 const Header: React.FC = () => {
   const { currentUser, loading, connectWallet, logout } = useAuth();
@@ -29,7 +29,6 @@ const Header: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <img src={CertiFiLogo} alt="CertiFi Logo" className="w-8 h-8 mix-blend-screen" />
-              <span className="text-2xl font-bold text-[#f9fafb]">CertiFi</span>
             </Link>
           </div>
 
