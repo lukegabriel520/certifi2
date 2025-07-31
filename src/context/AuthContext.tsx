@@ -36,91 +36,106 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
 
-  const getContract = async (withSigner = false): Promise<Contract> => {
-    if (!provider) throw new Error("Provider not initialized");
-    if (withSigner) {
-        const signer = await provider.getSigner();
-        return new Contract(CONTRACT_ADDRESS, CertificationABI, signer);
-    }
-    return new Contract(CONTRACT_ADDRESS, CertificationABI, provider);
-  }
+  // Gets contract instance. If a signer is not provided, it's a read-only instance.
+  const getContract = (signer?: ethers.Signer | null) => {
+    const contractProvider = signer ?? provider;
+    if (!contractProvider) throw new Error("Ethereum provider not available.");
+    return new Contract(CONTRACT_ADDRESS, CertificationABI, contractProvider);
+  };
 
-  const checkUser = async (ethProvider: BrowserProvider) => {
+  // Updates user state based on connected account
+  const updateUserState = async (ethProvider: BrowserProvider) => {
     setLoading(true);
     try {
-      const signer = await ethProvider.getSigner();
-      const address = signer.address;
-      const contract = await getContract();
-      const isInstitution = await contract.isInstitution(address);
-      const isVerifier = await contract.isVerifier(address);
-      setCurrentUser({ address, isInstitution, isVerifier });
+      const accounts = await ethProvider.listAccounts();
+      if (accounts.length > 0) {
+        const signer = await ethProvider.getSigner();
+        const contract = getContract(signer);
+        const address = signer.address;
+        const isInstitution = await contract.isInstitution(address);
+        const isVerifier = await contract.isVerifier(address);
+        setCurrentUser({ address, isInstitution, isVerifier });
+      } else {
+        setCurrentUser(null);
+      }
     } catch (error) {
-      // This error is expected if no wallet is connected, so we can silence it.
+      console.error("Error updating user state:", error);
       setCurrentUser(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Initializes provider and sets up listeners
   useEffect(() => {
     if (window.ethereum) {
       const ethProvider = new ethers.BrowserProvider(window.ethereum);
       setProvider(ethProvider);
-      checkUser(ethProvider);
+      updateUserState(ethProvider);
 
-      const handleAccountsChanged = () => checkUser(ethProvider);
+      const handleAccountsChanged = () => updateUserState(ethProvider);
       window.ethereum.on('accountsChanged', handleAccountsChanged);
 
       return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        if (window.ethereum.removeListener) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        }
       };
     } else {
+      console.log("MetaMask not detected.");
       setLoading(false);
     }
   }, []);
 
+  // Connects wallet and updates state
   const connectWallet = async () => {
     if (!provider) {
       alert('MetaMask is not installed. Please install it to use this app.');
       return;
     }
+    setLoading(true);
     try {
       await provider.send("eth_requestAccounts", []);
-      await checkUser(provider);
+      await updateUserState(provider);
     } catch (error) {
       console.error("Failed to connect wallet:", error);
+      setLoading(false);
     }
   };
 
   const logout = () => {
     setCurrentUser(null);
+    console.log("User logged out.");
   };
 
-  const issueCertificate = async (documentHash: string, documentName: string) => {
-    const contract = await getContract(true);
-    const tx = await contract.issueDocument(documentHash, documentName);
+  // Issues a new certificate (requires signer)
+  const issueCertificate = async (recipient: string, documentHash: string) => {
+    const signer = provider ? await provider.getSigner() : null;
+    if (!signer) throw new Error("Wallet not connected.");
+    const contract = getContract(signer);
+    const tx = await contract.issueCertificate(recipient, documentHash);
     return await tx.wait();
   };
 
-  const getCertificate = async (documentHash: string): Promise<Certificate | null> => {
-    const contract = await getContract();
-    const certData = await contract.documents(documentHash);
-    if (certData[0] === ethers.ZeroAddress) {
-        return null;
+  // Verifies a document (read-only)
+  const verifyDocument = async (documentHash: string): Promise<boolean> => {
+    const contract = getContract(); // No signer needed
+    return await contract.isVerified(documentHash);
+  };
+
+  // Gets certificate details by hash (read-only)
+  const getCertificateByHash = async (documentHash: string): Promise<Certificate | null> => {
+    const contract = getContract(); // No signer needed
+    const cert = await contract.certificates(documentHash);
+    if (cert.issuer === ethers.ZeroAddress) {
+      return null;
     }
     return {
-        issuer: certData[0],
-        fileName: certData[1],
-        isVerified: certData[2],
-        isRevoked: certData[3],
-        verificationNotes: certData[4]
+      issuer: cert.issuer,
+      recipient: cert.recipient,
+      documentHash: cert.documentHash,
+      timestamp: Number(cert.timestamp),
     };
-  };
-
-  const verifyDocument = async (documentHash: string, notes: string) => {
-    const contract = await getContract(true);
-    const tx = await contract.verifyDocument(documentHash, notes);
-    return await tx.wait();
   };
 
   const value: AuthContextType = {
@@ -129,8 +144,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     connectWallet,
     logout,
     issueCertificate,
-    getCertificate,
     verifyDocument,
+    getCertificateByHash,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

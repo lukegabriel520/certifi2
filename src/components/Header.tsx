@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import CertiFiLogo from '../assets/CertiFi_Logo.jpg';
 
 const Header: React.FC = () => {
-  const { currentUser, connectWallet, logout } = useAuth();
+  const { currentUser, loading, connectWallet, logout } = useAuth();
 
   const getRoleIcon = () => {
     if (!currentUser) return <User className="w-4 h-4" />;
@@ -68,9 +68,10 @@ const Header: React.FC = () => {
             ) : (
               <button
                 onClick={connectWallet}
-                className="bg-[#6366F1] hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#6366F1] hover:bg-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F46E5] disabled:bg-gray-500 disabled:cursor-not-allowed"
               >
-                Connect Wallet
+                {loading ? 'Connecting...' : 'Connect Wallet'}
               </button>
             )}
           </div>

@@ -6,10 +6,9 @@ export interface User {
 
 export interface Certificate {
   issuer: string;
-  fileName: string;
-  isVerified: boolean;
-  isRevoked: boolean;
-  verificationNotes: string;
+  recipient: string;
+  documentHash: string;
+  timestamp: number;
 }
 
 export interface AuthContextType {
@@ -17,7 +16,7 @@ export interface AuthContextType {
   loading: boolean;
   connectWallet: () => Promise<void>;
   logout: () => void;
-  issueCertificate: (documentHash: string, documentName: string) => Promise<any>;
-  getCertificate: (documentHash: string) => Promise<Certificate | null>;
-  verifyDocument: (documentHash: string, notes: string) => Promise<any>;
+  issueCertificate: (recipient: string, documentHash: string) => Promise<any>;
+  getCertificateByHash: (documentHash: string) => Promise<Certificate | null>;
+  verifyDocument: (documentHash: string) => Promise<boolean>;
 }
