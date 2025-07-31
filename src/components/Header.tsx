@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, Building2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import CertiFiLogo from '../assets/CertiFi_Logo.png';
+import CertiFiLogo from '../assets/CertiFi_Logo.jpg';
 
 const Header: React.FC = () => {
   const { currentUser, connectWallet, logout } = useAuth();
