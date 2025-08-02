@@ -5,6 +5,7 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthContext';
+import EnvTest from './components/EnvTest';
 
 const IssueCertificate = React.lazy(() => import('./components/IssueCertificate'));
 const VerifyDocument = React.lazy(() => import('./components/VerifyDocument'));
@@ -23,6 +24,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-[#0d1b2a] text-[#f9fafb]">
+        <EnvTest />
         <Header />
         <main className="container mx-auto px-4 py-6">
           <Suspense fallback={<LoadingFallback />}>
