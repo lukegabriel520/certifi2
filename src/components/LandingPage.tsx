@@ -15,7 +15,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
   const [verifierAddress, setVerifierAddress] = useState('');
   const [showMetaMaskModal, setShowMetaMaskModal] = useState(false);
 
-  // Get dynamic certificate counts
   const getUserCertificates = () => {
     if (!user) return [];
     return certificates.filter(cert => cert.userAddress === user.address);
@@ -44,7 +43,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
       return;
     }
 
-    // Validate Ethereum addresses
     const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
     if (!ethAddressRegex.test(institutionAddress)) {
       alert('Please enter a valid institution Ethereum address.');
@@ -56,7 +54,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
       return;
     }
 
-    // Prevent self-verification
     if (institutionAddress === user.address || verifierAddress === user.address) {
       alert('You cannot assign yourself as the institution or verifier.');
       return;
@@ -66,7 +63,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
       alert('Institution and verifier addresses must be different.');
       return;
     }
-    // Generate mock hash for demonstration
     const mockHash = `0x${Math.random().toString(16).substr(2, 64)}`;
     
     const certificate = {
@@ -83,7 +79,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
 
     addCertificate(certificate);
     
-    // Add notification for verifier
     addNotification({
       id: Date.now().toString(),
       type: 'verification',
@@ -93,7 +88,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Reset form
     setSelectedFile(null);
     setInstitutionAddress('');
     setVerifierAddress('');

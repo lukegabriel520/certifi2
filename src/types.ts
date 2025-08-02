@@ -64,7 +64,6 @@ export interface AuthContextType {
   // Add any additional methods that might be needed
 }
 
-// Contract event types
 export interface DocumentIssuedEvent {
   issuer: string;
   documentHash: string;
@@ -86,7 +85,6 @@ export interface DocumentRevokedEvent {
   transactionHash: string;
 }
 
-// Error types
 export enum AuthError {
   NETWORK_NOT_SUPPORTED = 'NETWORK_NOT_SUPPORTED',
   WALLET_NOT_CONNECTED = 'WALLET_NOT_CONNECTED',

@@ -16,8 +16,7 @@ interface ContractContextType {
 
 const ContractContext = createContext<ContractContextType | undefined>(undefined);
 
-// Update this with your required chain ID (e.g., 31337 for Hardhat, 11155111 for Sepolia)
-const REQUIRED_CHAIN_ID = 31337; // Hardhat local network
+const REQUIRED_CHAIN_ID = 31337;
 
 export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [contract, setContract] = useState<any | null>(null);
@@ -34,24 +33,19 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setError(null);
 
     try {
-      // Check if MetaMask is installed
       if (typeof window.ethereum === 'undefined') {
         throw new Error('Please install MetaMask to use this application');
       }
 
-      // Initialize contract
       const contractInstance = await initContract();
       setContract(contractInstance);
 
-      // Get current account
       const currentAccount = await getCurrentAccount();
       setAccount(currentAccount);
 
-      // Get user role
       const userRole = await getCurrentUserRole();
       setRole(userRole);
 
-      // Set up account change listener
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('chainChanged', handleChainChanged);
 
@@ -66,7 +60,6 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const connectWallet = async () => {
     try {
-      // Request account access if needed
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       await initialize();
     } catch (err: any) {
@@ -92,11 +85,9 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const handleAccountsChanged = (accounts: string[]) => {
     if (accounts.length === 0) {
-      // MetaMask is locked or the user has not connected any accounts
       setAccount(null);
       setRole(UserRole.NONE);
     } else if (account !== accounts[0]) {
-      // Account has changed
       setAccount(accounts[0]);
       // Refresh role when account changes
       refreshAccount();

@@ -18,7 +18,6 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Authorized addresses - easily scalable
 const AUTHORIZED_VERIFIERS = ['0x203C2945B811e748e669fac95584959718Fec9E0'];
 const AUTHORIZED_INSTITUTIONS = ['0x481A100167E7AF51A556322F6Cf7aF63Ecb57603'];
 
@@ -57,13 +56,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         setIsMetaMaskConnected(true);
         
-        // Store connection state in session
         sessionStorage.setItem('metamask_connected', 'true');
-
-        // Remove existing listeners to prevent duplicates
         metaMaskWindow.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        
-        // Listen for account changes
         metaMaskWindow.ethereum.on('accountsChanged', handleAccountsChanged);
       }
     } catch (error) {

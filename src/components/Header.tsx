@@ -21,13 +21,11 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     const handleRouteChange = () => {
       setIsMobileMenuOpen(false);
     };
 
-    // Listen for route changes
     const unlisten = () => {
       window.addEventListener('popstate', handleRouteChange);
       return () => window.removeEventListener('popstate', handleRouteChange);
@@ -36,7 +34,6 @@ const Header: React.FC = () => {
     return unlisten();
   }, []);
 
-  // Add scroll effect for header
   useEffect(() => {
     const handleScroll = () => {
       const offset = window.scrollY;
@@ -47,10 +44,8 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Smooth scroll handler
   const scrollToSection = (e: React.MouseEvent, sectionId: string) => {
     if (location.pathname !== '/') {
-      // If not on home page, navigate to home first
       window.location.href = `/#${sectionId}`;
       return;
     }
@@ -79,7 +74,6 @@ const Header: React.FC = () => {
     return 'User';
   };
 
-  // Navigation items data
   const navItems = [
     { id: 'home', label: 'Home', icon: HomeIcon, href: '/', sectionId: 'hero' },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', sectionId: null },
@@ -88,7 +82,6 @@ const Header: React.FC = () => {
     { id: 'contact', label: 'Contact Us', icon: Mail, href: '/', sectionId: 'contact' },
   ];
 
-  // Render navigation items
   const renderNavItems = (isMobile = false) => (
     <div className={`flex ${isMobile ? 'flex-col space-y-4 p-4' : 'items-center space-x-2'}`}>
       {navItems.map((item) => {
