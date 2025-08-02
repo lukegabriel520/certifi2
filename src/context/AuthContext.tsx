@@ -185,9 +185,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       const ethProvider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await ethProvider.send("eth_requestAccounts", []);
       
-      // Request account access if needed
-      await ethProvider.send("eth_requestAccounts", []);
+      if (accounts.length === 0) {
+        throw new Error('No accounts found');
+      }
       
       // Check and switch to the correct network
       const isCorrectNetwork = await checkNetwork(ethProvider);
@@ -210,12 +212,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   // Logout function
-  const logout = () => {
+  const logout = useCallback(() => {
+    // Reset all auth state
     setCurrentUser(null);
     setProvider(null);
     setContract(null);
     setError(null);
-  };
+    
+    // Clear any stored connection state
+    if (window.ethereum && window.ethereum.removeListener) {
+      // This will trigger the accountsChanged listener with empty accounts
+      window.ethereum.selectedAddress = null;
+    }
+  }, []);
 
   // Initialize provider and set up listeners
   useEffect(() => {
@@ -238,10 +247,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Set up event listeners
         const handleAccountsChanged = (accounts: string[]) => {
           if (accounts.length === 0) {
-            // MetaMask is locked or the user has disconnected all accounts
+            // User disconnected all accounts
             setCurrentUser(null);
+            setProvider(null);
+            setContract(null);
           } else {
-            updateUserState(ethProvider);
+            // Accounts changed, update the state
+            const newProvider = new ethers.BrowserProvider(window.ethereum);
+            updateUserState(newProvider);
           }
         };
         
