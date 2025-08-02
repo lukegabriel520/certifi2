@@ -2,49 +2,47 @@ import { ethers } from 'ethers';
 import CertificationArtifact from '../artifacts/contracts/Certification.sol/Certification.json';
 import { CertificationContract, ContractDeploymentInfo, UserRole } from '../types/contracts';
 
-const DEPLOYMENT_FILE = '/deployments/deployment-hardhat.json';
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
+
+if (!CONTRACT_ADDRESS) {
+  console.error('VITE_CONTRACT_ADDRESS is not set in environment variables');
+  throw new Error('Contract address not configured. Please set VITE_CONTRACT_ADDRESS in your .env file.');
+}
 
 let contractInstance: CertificationContract | null = null;
 let provider: ethers.BrowserProvider | null = null;
 let signer: ethers.JsonRpcSigner | null = null;
 
 export const initContract = async (): Promise<CertificationContract> => {
+  if (contractInstance) {
+    return contractInstance;
+  }
+
   if (typeof window.ethereum === 'undefined') {
     throw new Error('Ethereum provider not found. Please install MetaMask.');
   }
 
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-
-  const network = await provider.getNetwork();
-  
-  let deploymentInfo: ContractDeploymentInfo;
   try {
-    const response = await fetch(DEPLOYMENT_FILE);
-    const deployments = await response.json();
-    deploymentInfo = deployments[network.chainId];
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
     
-    if (!deploymentInfo) {
-      throw new Error(`No deployment found for network ${network.name} (${network.chainId})`);
-    }
+    contractInstance = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      CertificationArtifact.abi,
+      signer
+    ) as unknown as CertificationContract;
+
+    return contractInstance;
   } catch (error) {
-    console.error('Error loading deployment info:', error);
-    throw new Error('Failed to load contract deployment information');
+    console.error('Error initializing contract:', error);
+    throw new Error('Failed to initialize contract. Please check your connection and try again.');
   }
-
-  contractInstance = new ethers.Contract(
-    deploymentInfo.contractAddress,
-    CertificationArtifact.abi,
-    signer
-  ) as unknown as CertificationContract;
-
-  return contractInstance;
 };
 
 
-export const getContract = (): CertificationContract => {
+export const getContract = async (): Promise<CertificationContract> => {
   if (!contractInstance) {
-    throw new Error('Contract not initialized. Call initContract() first.');
+    return await initContract();
   }
   return contractInstance;
 };
@@ -59,9 +57,14 @@ export const getCurrentAccount = async (): Promise<string> => {
 
 
 export const getCurrentUserRole = async (): Promise<UserRole> => {
-  const contract = getContract();
-  const address = await getCurrentAccount();
-  return contract.userRoles(address);
+  try {
+    const contract = await getContract();
+    const address = await getCurrentAccount();
+    return await contract.userRoles(address);
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    throw new Error('Failed to get user role. Please ensure you are connected to the correct network.');
+  }
 };
 
 
