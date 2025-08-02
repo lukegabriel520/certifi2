@@ -1,0 +1,8 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0xB715285DA4dc4AEd474ef39F71Eb62d0a6298aec",
+  "deployer": "0x481A100167E7AF51A556322F6Cf7aF63Ecb57603",
+  "timestamp": "2025-08-02T07:34:56.085Z",
+  "rpcUrl": "https://sepolia.infura.io/v3/bffdf66be803443eac2fcf7b408ecfa9"
+}

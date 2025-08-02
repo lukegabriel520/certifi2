@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, CheckCircle, Bell, Shield, Users, Lock, FileText, Building2, Briefcase } from 'lucide-react';
 import FileUpload from './FileUpload';
+import Footer from './Footer';
 import { useApp } from '../context/AppContext';
 
 interface LandingPageProps {
@@ -113,30 +114,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
   };
 
   const renderHeroSection = () => (
-    <section id="home" className="min-h-screen bg-[#0d1b2a] py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="home" className="min-h-screen bg-[#0d1b2a] py-20 flex items-center">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-5xl font-bold text-[#f9fafb] mb-6">
+          <div className="text-center md:text-left">
+            <h1 className="text-4xl sm:text-5xl font-bold text-[#f9fafb] mb-6">
               Welcome,
               <br />
               <span className="text-[#6366F1]">
                 {user ? 'Valued User!' : 'Guest!'}
               </span>
             </h1>
-            <p className="text-xl text-[#cbd5e1] mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl text-[#cbd5e1] mb-8 leading-relaxed max-w-2xl mx-auto md:mx-0">
               Manage and issue your academic certificates with ease.
-              <br />
+              <br className="hidden sm:block" />
               Oversee all verification requests in one place.
             </p>
-            <button 
-              onClick={() => document.getElementById('dashboard')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-[#6366F1] hover:bg-indigo-600 text-white px-8 py-4 rounded-lg transition-colors text-lg font-medium"
-            >
-              View All Certificates
-            </button>
+            <div className="flex justify-center md:justify-start">
+              <button 
+                onClick={() => document.getElementById('dashboard')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-[#6366F1] hover:bg-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-colors text-base sm:text-lg font-medium w-full sm:w-auto text-center"
+              >
+                View All Certificates
+              </button>
+            </div>
 
-            <div className="grid grid-cols-2 gap-6 mt-12">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-12 max-w-md mx-auto md:mx-0">
               <div className="bg-[#1b263b] p-6 rounded-lg border border-[#415a77]">
                 <h3 className="text-[#cbd5e1] text-sm font-medium mb-2">Total Certificate Entries</h3>
                 <p className="text-3xl font-bold text-[#6366F1]">{totalCertificates}</p>
@@ -148,7 +151,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
             </div>
           </div>
 
-          <div className="bg-[#1b263b] p-8 rounded-lg border-2 border-dashed border-[#415a77]">
+          <div className="bg-[#1b263b] p-6 sm:p-8 rounded-lg border-2 border-dashed border-[#415a77] max-w-2xl mx-auto md:mx-0 w-full">
             {selectedFile ? (
               <div className="space-y-6">
                 <FileUpload
@@ -313,9 +316,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
             </p>
           </div>
         </div>
-        <div className="text-center mt-12">
-          <p className="text-[#cbd5e1]">© 2025 CertiFi.</p>
-        </div>
       </div>
     </section>
   );
@@ -355,12 +355,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ currentSection }) => {
 
   // Render appropriate section based on currentSection
   return (
-    <div className="min-h-screen bg-[#0d1b2a]">
-      {renderHeroSection()}
-      {renderHowItWorks()}
-      {renderFAQ()}
-      {renderContact()}
-      {renderMetaMaskModal()}
+    <div className="min-h-screen bg-[#0d1b2a] flex flex-col">
+      <main className="flex-grow">
+        {renderHeroSection()}
+        {renderHowItWorks()}
+        {renderFAQ()}
+        {renderContact()}
+        {renderMetaMaskModal()}
+      </main>
+      <Footer />
     </div>
   );
 };

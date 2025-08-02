@@ -28,34 +28,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
 
   const userCerts = getUserCertificates();
   const pendingCerts = userCerts.filter(cert => cert.status === 'pending' || cert.status === 'verified');
-  const completedCerts = userCerts.filter(cert => cert.status === 'completed');
+  const completedCerts = userCerts.filter(cert => cert.status === 'completed' || cert.status === 'rejected');
   const displayCerts = showCompleted ? completedCerts : pendingCerts;
 
-  const getStatusIcon = (status: Certificate['status']) => {
+  const getStatusIcon = (status: Certificate['status'] = 'pending') => {
     switch (status) {
-      case 'pending':
-        return <Clock className="w-4 h-4 text-[#6366F1]" />;
       case 'verified':
         return <CheckCircle className="w-4 h-4 text-[#10B981]" />;
-      case 'invalid':
+      case 'rejected':
         return <XCircle className="w-4 h-4 text-[#EF4444]" />;
       case 'completed':
         return <Archive className="w-4 h-4 text-[#778da9]" />;
+      case 'pending':
       default:
         return <Clock className="w-4 h-4 text-[#6366F1]" />;
     }
   };
 
-  const getStatusColor = (status: Certificate['status']) => {
+  const getStatusColor = (status: Certificate['status'] = 'pending') => {
     switch (status) {
-      case 'pending':
-        return 'text-[#6366F1] bg-[#6366F1]/10';
       case 'verified':
         return 'text-[#10B981] bg-[#10B981]/10';
-      case 'invalid':
+      case 'rejected':
         return 'text-[#EF4444] bg-[#EF4444]/10';
       case 'completed':
         return 'text-[#778da9] bg-[#778da9]/10';
+      case 'pending':
       default:
         return 'text-[#6366F1] bg-[#6366F1]/10';
     }
@@ -74,15 +72,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (!user || user.role === 'guest') {
+  const formatAddress = (address?: string) => {
+    if (!address) return 'N/A';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const formatDate = (dateString?: string | Date) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      return date.toLocaleDateString();
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return 'Invalid Date';
+    }
+  };
+
+  if (!user || !user.role || user.role === 'guest') {
     return null;
   }
 
@@ -172,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
                           <p className="text-[#778da9] text-sm mt-2">
                             No certificates in your database yet
                           </p>
-                        </p>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -196,10 +210,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
                       {user.role === 'user' && (
                         <>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.institutionName || `${cert.institutionAddress.slice(0, 6)}...${cert.institutionAddress.slice(-4)}`}
+                            {cert.institutionName || formatAddress(cert.institutionAddress)}
                           </td>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.verifierName || `${cert.verifierAddress.slice(0, 6)}...${cert.verifierAddress.slice(-4)}`}
+                            {cert.verifierName || formatAddress(cert.verifierAddress)}
                           </td>
                         </>
                       )}
@@ -207,10 +221,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
                       {user.role === 'verifier' && (
                         <>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.userAddress.slice(0, 6)}...{cert.userAddress.slice(-4)}
+                            {formatAddress(cert.userAddress)}
                           </td>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.institutionName || `${cert.institutionAddress.slice(0, 6)}...${cert.institutionAddress.slice(-4)}`}
+                            {cert.institutionName || formatAddress(cert.institutionAddress)}
                           </td>
                         </>
                       )}
@@ -218,13 +232,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
                       {user.role === 'institution' && (
                         <>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.userAddress.slice(0, 6)}...{cert.userAddress.slice(-4)}
+                            {formatAddress(cert.userAddress)}
                           </td>
                           <td className="px-6 py-4 text-[#cbd5e1]">
-                            {cert.verifierName || `${cert.verifierAddress.slice(0, 6)}...${cert.verifierAddress.slice(-4)}`}
+                            {cert.verifierName || formatAddress(cert.verifierAddress)}
                           </td>
                           <td className="px-6 py-4 text-[#cbd5e1] font-mono text-sm">
-                            {cert.hash.slice(0, 8)}...{cert.hash.slice(-8)}
+                            {cert.hash ? `${cert.hash.slice(0, 8)}...${cert.hash.slice(-8)}` : 'N/A'}
                           </td>
                         </>
                       )}
@@ -238,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCertificateClick }) => {
                       <td className="px-6 py-4 text-[#cbd5e1]">
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-2" />
-                          {new Date(cert.uploadDate).toLocaleDateString()}
+                          {formatDate(cert.uploadDate)}
                         </div>
                       </td>
                     </tr>
