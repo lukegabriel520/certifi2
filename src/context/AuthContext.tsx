@@ -9,17 +9,22 @@ import {
 } from 'ethers';
 import { User } from '../types';
 
-// Contract ABI
+// Contract ABI - Updated to match the actual contract interface
 const CERTIFICATION_ABI = [
+  // Functions
   'function isInstitution(address) view returns (bool)',
   'function isVerifier(address) view returns (bool)',
-  'function issueDocument(string documentHash, string metadataURI) returns (bool)',
-  'function verifyDocument(string documentHash, string verificationResult) returns (bool)',
-  'function documents(string) view returns (string, string, bool, bool, string)',
-  'event DocumentIssued(address indexed issuer, address indexed recipient, string documentHash)',
-  'event DocumentVerified(address indexed verifier, string documentHash, string result)',
-  'event RoleGranted(string role, address account)',
-  'event RoleRevoked(string role, address account)'
+  'function issueDocument(string memory documentHash, string memory metadataURI) external',
+  'function verifyDocument(string memory documentHash, string memory verificationResult) external',
+  'function documents(string memory) view returns (string memory, string memory, bool, bool, string memory)',
+  'function getUserRole(address) view returns (uint8)',
+  
+  // Events
+  'event DocumentIssued(bytes32 indexed documentId, address indexed issuer, address indexed recipient, string documentHash)',
+  'event DocumentVerified(bytes32 indexed documentId, address indexed verifier, string documentHash, string result)',
+  'event DocumentRevoked(bytes32 indexed documentId, address indexed issuer)',
+  'event RoleUpdated(address indexed user, uint8 newRole)',
+  'event UserRegistered(address indexed user, uint8 role)'
 ] as const;
 
 // Contract interface
@@ -90,18 +95,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Initialize contract
   const initContract = useCallback(async (signer: JsonRpcSigner): Promise<ICertificationContract> => {
     try {
+      // Create the contract instance
       const contract = new ethers.Contract(
         CONTRACT_ADDRESS,
         CERTIFICATION_ABI,
         signer
       ) as unknown as ICertificationContract;
 
-      // Test the contract is accessible
-      await contract.isInstitution(await signer.getAddress());
+      // Test the contract is accessible with a simple view function
+      try {
+        await contract.getUserRole(await signer.getAddress());
+      } catch (err) {
+        console.warn('getUserRole call failed, trying isInstitution...');
+        // Fallback to isInstitution if getUserRole fails
+        await contract.isInstitution(await signer.getAddress());
+      }
+      
       return contract;
     } catch (error) {
       console.error('Error initializing contract:', error);
-      throw new Error('Failed to initialize contract');
+      throw new Error('Failed to initialize contract. Make sure you are connected to the correct network and the contract address is correct.');
     }
   }, []);
 
@@ -136,6 +149,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
       
+      console.log('Requesting accounts...');
       // Request accounts
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
@@ -146,37 +160,53 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return false;
       }
 
+      console.log('Initializing provider and signer...');
       // Initialize provider and signer
       const web3Provider = new BrowserProvider(window.ethereum);
       const signer = await web3Provider.getSigner();
       
+      console.log('Checking network...');
       // Check network
       const isSepolia = await checkIfSepolia(web3Provider);
       if (!isSepolia) {
         try {
+          console.log('Switching to Sepolia network...');
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: `0x${parseInt(DEFAULT_CHAIN_ID, 10).toString(16)}` }],
           });
+          console.log('Network switched, reloading page...');
           window.location.reload();
           return true;
         } catch (switchError: any) {
+          console.error('Failed to switch network:', switchError);
           setError('Please switch to the Sepolia testnet');
           return false;
         }
       }
 
+      console.log('Initializing contract...');
       // Initialize contract
-      const contractInstance = await initContract(signer);
+      let contractInstance;
+      try {
+        contractInstance = await initContract(signer);
+        console.log('Contract initialized successfully');
+      } catch (err) {
+        console.error('Contract initialization failed:', err);
+        throw new Error(`Contract initialization failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
       
       // Update state
+      console.log('Updating application state...');
       setProvider(web3Provider);
       setContract(contractInstance);
       await updateUserState(accounts[0]);
       setIsNetworkCorrect(true);
       
+      console.log('Setting up event listeners...');
       // Set up event listeners
       const handleAccountsChanged = (accounts: string[]) => {
+        console.log('Accounts changed:', accounts);
         if (accounts.length === 0) {
           setCurrentUser(null);
           setContract(null);
@@ -186,12 +216,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
       
       const handleChainChanged = () => {
+        console.log('Chain changed, reloading...');
         window.location.reload();
       };
       
+      // Remove any existing listeners to prevent duplicates
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+      
+      // Add new listeners
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('chainChanged', handleChainChanged);
       
+      console.log('Wallet connection successful');
       return true;
     } catch (err: any) {
       console.error('Error connecting wallet:', err);
