@@ -6,6 +6,7 @@ import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import { AuthProvider } from './context/AuthContext';
 import EnvTest from './components/EnvTest';
+import ContractTest from './components/ContractTest';
 
 const IssueCertificate = React.lazy(() => import('./components/IssueCertificate'));
 const VerifyDocument = React.lazy(() => import('./components/VerifyDocument'));
@@ -26,7 +27,12 @@ function App() {
       <div className="min-h-screen bg-[#0d1b2a] text-[#f9fafb]">
         <EnvTest />
         <Header />
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
+          {/* Temporary debug component */}
+          <div className="mb-8">
+            <ContractTest />
+          </div>
+          <main>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<LandingPageWithDefaultProps />} />
@@ -41,7 +47,8 @@ function App() {
               </Route>
             </Routes>
           </Suspense>
-        </main>
+          </main>
+        </div>
       </div>
     </AuthProvider>
   );
