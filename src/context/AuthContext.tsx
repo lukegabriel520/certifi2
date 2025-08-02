@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
   
-  const disconnectWallet = useCallback(async () => {
+  const logout = useCallback(async () => {
     setCurrentUser(null);
     setProvider(null);
     setCertificationContract(null);
@@ -160,10 +160,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   }, []);
-  
-  const logout = useCallback(() => {
-    disconnectWallet();
-  }, [disconnectWallet]);
   
   const updateUserState = useCallback(async (address: string) => {
     if (!certificationContract) return;
@@ -401,8 +397,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setProvider(null);
     setCertificationContract(null);
     setError(null);
-    
-    // Reset any wallet connection state
+
     if (window.ethereum) {
       try {
         await window.ethereum.request({
